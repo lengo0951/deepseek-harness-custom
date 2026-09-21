@@ -555,6 +555,27 @@ describe('Chat node rendering', () => {
 })
 
 describe('ChatView', () => {
+  it('pins the session display title above the flow for a reader scrolled into history', () => {
+    const h = makeHarness()
+    const sessions = createSnapshotStore<SessionListState>({
+      ids: [SID],
+      byId: { [SID]: { id: SID, displayTitle: 'Refactor the paging anchor', running: false, blank: false, updatedAt: 1 } },
+      current: SID,
+      phase: 'ready',
+      subagentsByParent: {},
+      jobsBySession: {},
+      currentAddress: undefined,
+    })
+    const { container } = render(<h.ChatView {...h.props} useSessions={bindSnapshotSelector(sessions)} />)
+    expect(container.querySelector('[class*="sessionBanner"]')?.textContent).toBe('Refactor the paging anchor')
+  })
+
+  it('renders no session banner when the session list has not admitted the row yet', () => {
+    const h = makeHarness()
+    const { container } = render(<h.ChatView {...h.props} />)
+    expect(container.querySelector('[class*="sessionBanner"]')).toBeNull()
+  })
+
   it('leaves the turn rail unrendered when an unrelated Chat update commits', () => {
     const snapshot = chatSnapshotFixture({
       nodes: [

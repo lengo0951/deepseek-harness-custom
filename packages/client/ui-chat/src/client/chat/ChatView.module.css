@@ -136,6 +136,24 @@
   }
 }
 
+/* Pinned above the flow: an opaque restatement of the session title so a
+   reader scrolled deep into history keeps their bearings. Ranked with
+   toBottomSlot (8) — both outrank the compaction header (7) and CodeBlock's
+   banner (6), which sit further down inside individual messages. */
+.sessionBanner {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  padding: 4px 0;
+  background: var(--dsw-alias-bg-base);
+  color: var(--dsw-alias-label-tertiary);
+  font-size: var(--dsh-content-font-size-secondary, 13px);
+  line-height: calc(18px + var(--dsh-content-font-delta-secondary, 0px));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .hint {
   color: var(--dsw-alias-label-tertiary);
   font-size: var(--dsh-content-font-size-secondary, 13px);

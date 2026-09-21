@@ -19,6 +19,17 @@ function declarationsFrom(source: string, selector: string): string[] {
 }
 
 describe('pinned collapsible headers', () => {
+  it('pins the session banner above the flow, ranked with the back-to-bottom control', () => {
+    expect(declarationsFrom(read('ChatView.module.css'), '.sessionBanner')).toEqual(expect.arrayContaining([
+      'position: sticky',
+      'top: 0',
+      // toBottomSlot also ranks 8; the two never overlap spatially (top band vs
+      // bottom-right corner), and both must outrank the compaction header (7).
+      'z-index: 8',
+      'background: var(--dsw-alias-bg-base)',
+    ]))
+  })
+
   it('pins an open Think header to the scrollport top and masks the prose under it', () => {
     expect(
       declarationsFrom(read('ReasoningRow.module.css'), '.root[data-expanded] [data-open] [data-disclosure-row]'),

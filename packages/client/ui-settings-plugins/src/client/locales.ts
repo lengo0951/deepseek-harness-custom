@@ -17,6 +17,11 @@ export type PluginsSettingsLocaleKey =
   | 'subagentModelSelectionPartial' | 'subagentModelSelectionUnavailable'
   | 'subagentModelSelectionUnavailableGroup' | 'subagentModelSelectionEmpty'
   | 'subagentModelSelectionRequired' | 'subagentModelSelectionConflict' | 'subagentModelSelectionOff'
+  | 'overleafTitle' | 'overleafDescription'
+  | 'overleafApiKey' | 'overleafApiKeyHint' | 'overleafApiKeySet' | 'overleafApiKeyUnset'
+  | 'overleafDefaultProjectId' | 'overleafDefaultProjectIdHint'
+  | 'overleafDefaultProjectName' | 'overleafDefaultProjectNameHint'
+  | 'overleafConfigPath' | 'overleafConfigPathHint'
 
 /** English copy. */
 export const en: Record<PluginsSettingsLocaleKey, string> = {
@@ -72,6 +77,18 @@ export const en: Record<PluginsSettingsLocaleKey, string> = {
   subagentModelSelectionRequired: 'Select at least one model before saving.',
   subagentModelSelectionConflict: 'Settings changed elsewhere. Discard your draft and try again.',
   subagentModelSelectionOff: 'Subagents use configured defaults or inherit the parent agent\'s model. Saved model choices are retained.',
+  overleafTitle: 'Overleaf',
+  overleafDescription: 'Connect and synchronize Overleaf LaTeX projects via Git.',
+  overleafApiKey: 'Git token',
+  overleafApiKeyHint: 'Overleaf Git token. Stored outside the settings file. Leave blank to keep the current key.',
+  overleafApiKeySet: 'A Git token is configured.',
+  overleafApiKeyUnset: 'No Git token is configured; Git operations will fail until one is set.',
+  overleafDefaultProjectId: 'Default project ID',
+  overleafDefaultProjectIdHint: '24 hex-character project ID from the Overleaf URL.',
+  overleafDefaultProjectName: 'Default project name',
+  overleafDefaultProjectNameHint: 'Human-readable name for this project.',
+  overleafConfigPath: 'Projects config file',
+  overleafConfigPathHint: 'Path to projects.json containing multi-project configurations.',
 }
 
 /** Simplified Chinese copy. */
@@ -128,4 +145,16 @@ export const zh: Record<PluginsSettingsLocaleKey, string> = {
   subagentModelSelectionRequired: '保存前请至少选择一个模型。',
   subagentModelSelectionConflict: '设置已在其他位置更新。请放弃修改后重试。',
   subagentModelSelectionOff: '关闭后，Subagent 使用配置的默认模型或继承父 Agent 的模型；已选模型会保留。',
+  overleafTitle: 'Overleaf',
+  overleafDescription: '通过 Git 桥接连接并同步 Overleaf LaTeX 项目。',
+  overleafApiKey: 'Git 访问令牌',
+  overleafApiKeyHint: 'Overleaf Git 凭据，保存在设置文件之外。留空表示保持当前密钥。',
+  overleafApiKeySet: '已配置 Git 访问令牌。',
+  overleafApiKeyUnset: '未配置 Git 令牌；配置之前无法执行 Git 操作。',
+  overleafDefaultProjectId: '默认项目 ID',
+  overleafDefaultProjectIdHint: '来自 Overleaf 项目 URL 的 24 位十六进制 ID。',
+  overleafDefaultProjectName: '默认项目名称',
+  overleafDefaultProjectNameHint: '该项目的可读显示名称。',
+  overleafConfigPath: '多项目配置文件',
+  overleafConfigPathHint: '存储多个项目配置的 projects.json 路径。',
 }

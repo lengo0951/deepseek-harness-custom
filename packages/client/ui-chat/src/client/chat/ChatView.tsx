@@ -236,6 +236,10 @@ export function ChatView({
   const inbox = useSession(s => s.queue)
   // Workspace root off the session list row: path summaries display relative to it.
   const cwd = useSessions(s => s.byId[sessionId]?.cwd)
+  // Pinned above the flow so a reader scrolled deep into history still sees
+  // which session owns it; ConversationSessionHeader covers the same title
+  // outside the scrollport, this repeats it inside for long scrollback.
+  const sessionTitle = useSessions(s => s.byId[sessionId]?.displayTitle)
   const running = useSession(s => s.running)
   const openState = useSession(s => s.openState)
   const openError = useSession(s => s.openError)
@@ -768,6 +772,9 @@ export function ChatView({
           t={t}
         />
         <div ref={columnRef} className={css.column} data-chat-flow="">
+          {sessionTitle !== undefined && sessionTitle !== '' && (
+            <div className={css.sessionBanner} aria-hidden title={sessionTitle}>{sessionTitle}</div>
+          )}
           {openState === 'loading' && <div className={css.hint}>{t('chat.loadingHistory')}</div>}
           {openState === 'error' && openError !== null && (
             <div className={css.openError}>

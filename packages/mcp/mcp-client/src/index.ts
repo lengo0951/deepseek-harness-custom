@@ -184,7 +184,6 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
   const dispose = (): Promise<void> => stopping ??= connection.dispose()
   // Cordis announces unload before awaiting an unfinished apply(). Closing
   // the transport here releases startup requests that are still awaiting a reply.
-  // oxlint-disable-next-line typescript/no-misused-promises -- Cordis contains observer failures; the effect also awaits this promise.
   ctx.on('internal/plugin', (fiber) => {
     if (fiber !== ctx.fiber || fiber.uid !== null) return
     return dispose()
@@ -199,5 +198,37 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
   const outcome = await connection.ready
   if (outcome.error !== undefined && config.failOnStartupError) {
     throw new Error(`mcp-client(${config.serverName}): initial connection or tool synchronization failed`, { cause: outcome.error })
+  }
+
+  if (config.serverName === 'overleaf') {
+    ctx.inject(['settings'], (settingsCtx: Context) => {
+      const OverleafConfig = z.object({
+        apiKeyEnv: z.string().default('OVERLEAF_GIT_TOKEN'),
+        defaultProjectId: z.string().default('6a9d55af5c049db9c6e37c8a'),
+        defaultProjectName: z.string().default('Existing Overleaf Project'),
+        configPath: z.string().default('/Users/coolstar/.config/overleaf-mcp/projects.json'),
+      })
+      const defaultEntry = {
+        apiKeyEnv: 'OVERLEAF_GIT_TOKEN',
+        defaultProjectId: '6a9d55af5c049db9c6e37c8a',
+        defaultProjectName: 'Existing Overleaf Project',
+        configPath: '/Users/coolstar/.config/overleaf-mcp/projects.json',
+      }
+      const settingsHolder = settingsCtx as unknown as {
+        settings: {
+          installSection: (
+            ctx: Context,
+            section: string,
+            schema: unknown,
+            initial: unknown,
+            options: unknown,
+          ) => void
+        }
+      }
+      settingsHolder.settings.installSection(ctx, 'overleaf', OverleafConfig, defaultEntry, {
+        setSource: () => {},
+        onChange: () => {},
+      })
+    })
   }
 }

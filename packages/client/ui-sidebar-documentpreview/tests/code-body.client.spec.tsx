@@ -3,8 +3,8 @@
 import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { afterEach, describe, expect, it } from 'vitest'
-import { cleanup, render, waitFor } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, waitFor } from '@testing-library/react'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { absoluteFileAddress, sessionFileAddress } from '@deepseek-ai/dsh-util-workspace-path'
 import { CodeBody } from '../src/client/code/CodeBody.tsx'
@@ -174,5 +174,164 @@ describe('CodeBody', () => {
     view.rerender(<CodeBody {...props(content)} />)
     expect(getComputedStyle(pre).whiteSpace).toBe('pre')
     expect(getComputedStyle(pre).overflowWrap).toBe('normal')
+  })
+
+  it('renders editor status bar with line stats, language, and line selection', () => {
+    const code = 'const first = 1\nconst second = 2\nconst third = 3'
+    const view = render(<CodeBody {...props(contents([code], true))} />)
+    expect(view.getByText('3 lines')).toBeTruthy()
+    expect(view.getByText('TYPESCRIPT')).toBeTruthy()
+    expect(view.getByText('Ln 1')).toBeTruthy()
+
+    // Click on line 2
+    const lines = view.container.querySelectorAll('.shiki .line')
+    expect(lines.length).toBe(3)
+    fireEvent.click(lines[1]!)
+    expect(view.getByText('Ln 2')).toBeTruthy()
+  })
+
+  it('toggles find in file toolbar and navigates matches', () => {
+    const code = 'function foo() {\n  const foo = 1\n  return foo\n}'
+    const view = render(<CodeBody {...props(contents([code], true))} />)
+
+    // Open find bar via button
+    const findButtons = view.getAllByTitle('Find')
+    expect(findButtons.length).toBeGreaterThan(0)
+    fireEvent.click(findButtons[0]!)
+
+    const input = view.getByPlaceholderText('Find in file…') as HTMLInputElement
+    expect(input).toBeTruthy()
+
+    // Toggle off via the same button
+    fireEvent.click(findButtons[0]!)
+    expect(view.queryByPlaceholderText('Find in file…')).toBeNull()
+
+    // Reopen via button
+    fireEvent.click(findButtons[0]!)
+    const input2 = view.getByPlaceholderText('Find in file…') as HTMLInputElement
+
+    // Type query matching 'foo'
+    fireEvent.change(input2, { target: { value: 'foo' } })
+    expect(view.getByText('1/3')).toBeTruthy()
+
+    // Navigate to next match
+    const nextBtn = view.getByTitle('Next match')
+    fireEvent.click(nextBtn)
+    expect(view.getByText('2/3')).toBeTruthy()
+
+    // Navigate to previous match
+    const prevBtn = view.getByTitle('Previous match')
+    fireEvent.click(prevBtn)
+    expect(view.getByText('1/3')).toBeTruthy()
+
+    // Close via close button
+    const closeBtn = view.getByTitle('Close')
+    fireEvent.click(closeBtn)
+    expect(view.queryByPlaceholderText('Find in file…')).toBeNull()
+  })
+
+  it('opens and submits go-to-line dialog', () => {
+    const code = 'line 1\nline 2\nline 3\nline 4\nline 5'
+    const view = render(<CodeBody {...props(contents([code], true))} />)
+
+    const goToLineButtons = view.getAllByTitle('Go to Line')
+    expect(goToLineButtons.length).toBeGreaterThan(0)
+    fireEvent.click(goToLineButtons[0]!)
+
+    const input = view.getByPlaceholderText('Line number…') as HTMLInputElement
+    expect(input).toBeTruthy()
+
+    // Toggle off via button
+    fireEvent.click(goToLineButtons[0]!)
+    expect(view.queryByPlaceholderText('Line number…')).toBeNull()
+
+    // Reopen
+    fireEvent.click(goToLineButtons[0]!)
+    const input2 = view.getByPlaceholderText('Line number…') as HTMLInputElement
+
+    fireEvent.change(input2, { target: { value: '4' } })
+    const goBtn = view.getByRole('button', { name: 'Go' })
+    fireEvent.click(goBtn)
+
+    expect(view.queryByPlaceholderText('Line number…')).toBeNull()
+    expect(view.getByText('Ln 4')).toBeTruthy()
+  })
+
+  it('supports keyboard shortcuts, navigation keys, and close actions', () => {
+    const code = 'abc\ndef\nabc'
+    const scrollportFn = vi.fn()
+    const view = render(<CodeBody {...props(contents([code], true), { scrollportRef: scrollportFn })} />)
+    expect(scrollportFn).toHaveBeenCalled()
+
+    // Test Cmd+F
+    fireEvent.keyDown(window, { key: 'f', metaKey: true })
+    const input = view.getByPlaceholderText('Find in file…') as HTMLInputElement
+    expect(input).toBeTruthy()
+
+    // Type query with no matches
+    fireEvent.change(input, { target: { value: 'zzz' } })
+    expect(view.getByText('No matches')).toBeTruthy()
+
+    // Type empty query
+    fireEvent.change(input, { target: { value: '' } })
+
+    // Type matching query
+    fireEvent.change(input, { target: { value: 'abc' } })
+    expect(view.getByText('1/2')).toBeTruthy()
+
+    // Regular key (Tab) doesn't navigate or close
+    fireEvent.keyDown(input, { key: 'Tab' })
+
+    // Enter for next match
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(view.getByText('2/2')).toBeTruthy()
+
+    // Shift+Enter for previous match
+    fireEvent.keyDown(input, { key: 'Enter', shiftKey: true })
+    expect(view.getByText('1/2')).toBeTruthy()
+
+    // Escape closes find bar
+    fireEvent.keyDown(input, { key: 'Escape' })
+    expect(view.queryByPlaceholderText('Find in file…')).toBeNull()
+
+    // Other key on window does not trigger actions
+    fireEvent.keyDown(window, { key: 'z', metaKey: true })
+
+    // Test Ctrl+G
+    fireEvent.keyDown(window, { key: 'g', ctrlKey: true })
+    const lineInput = view.getByPlaceholderText('Line number…') as HTMLInputElement
+    expect(lineInput).toBeTruthy()
+
+    // Regular key (Tab) doesn't close
+    fireEvent.keyDown(lineInput, { key: 'Tab' })
+
+    // Close button on go-to-line
+    const closeBtns = view.getAllByTitle('Close')
+    fireEvent.click(closeBtns[0]!)
+    expect(view.queryByPlaceholderText('Line number…')).toBeNull()
+
+    // Reopen go-to-line and close via Escape
+    fireEvent.keyDown(window, { key: 'g', metaKey: true })
+    const lineInput2 = view.getByPlaceholderText('Line number…') as HTMLInputElement
+    fireEvent.keyDown(lineInput2, { key: 'Escape' })
+    expect(view.queryByPlaceholderText('Line number…')).toBeNull()
+
+    // Submit with empty value does not throw or change
+    fireEvent.keyDown(window, { key: 'g', metaKey: true })
+    const goBtn = view.getByRole('button', { name: 'Go' })
+    fireEvent.click(goBtn)
+
+    // Click outside lines does nothing
+    fireEvent.click(view.container)
+  })
+
+  it('renders plain text badge when file has no extension', () => {
+    const view = render(<CodeBody {...props(contents(['plain text line'], true), { resourceAddress: sessionFileAddress(SESSION, 'LICENSE') })} />)
+    expect(view.getByText('Plain Text')).toBeTruthy()
+  })
+
+  it('renders zero lines when content is empty string', () => {
+    const view = render(<CodeBody {...props(contents([''], true))} />)
+    expect(view.getByText('0 lines')).toBeTruthy()
   })
 })

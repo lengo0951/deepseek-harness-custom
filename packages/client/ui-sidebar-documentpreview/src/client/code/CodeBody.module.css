@@ -1,4 +1,5 @@
 .renderer {
+  position: relative;
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
@@ -57,4 +58,162 @@
 .renderer[data-wrap='true'] .code pre {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+.searchBar {
+  position: absolute;
+  top: 8px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  background: var(--dsw-alias-bg-layer-2);
+  border: 0;
+  border-radius: 6px;
+  box-shadow: var(--dsw-elevation-panel);
+}
+
+.searchInput {
+  width: 140px;
+  height: 24px;
+  padding: 0 6px;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-bg-layer-1);
+  border: 0.5px solid var(--dsw-alias-border-l1);
+  border-radius: 4px;
+  outline: none;
+}
+
+.searchInput:focus {
+  border-color: var(--dsw-alias-border-l3);
+}
+
+.searchMatches {
+  min-width: 44px;
+  padding: 0 4px;
+  font-size: 11px;
+  color: var(--dsw-alias-label-secondary);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  color: var(--dsw-alias-label-secondary);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.iconButton:hover:not(:disabled) {
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-fill-hover);
+}
+
+.iconButton:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.goToLineBar {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  background: var(--dsw-alias-bg-layer-2);
+  border: 0;
+  border-radius: 6px;
+  box-shadow: var(--dsw-elevation-panel);
+}
+
+.goToLineInput {
+  width: 110px;
+  height: 24px;
+  padding: 0 6px;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-bg-layer-1);
+  border: 0.5px solid var(--dsw-alias-border-l1);
+  border-radius: 4px;
+  outline: none;
+}
+
+.goToLineInput:focus {
+  border-color: var(--dsw-alias-border-l3);
+}
+
+.goToLineSubmit {
+  height: 24px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-fill-hover);
+  border: 0.5px solid var(--dsw-alias-border-l1);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.goToLineSubmit:hover {
+  background: var(--dsw-alias-fill-active);
+}
+
+.statusBar {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  height: 24px;
+  padding: 0 10px;
+  font-size: 11px;
+  color: var(--dsw-alias-label-secondary);
+  background: var(--dsw-alias-bg-layer-2);
+  border-top: 0.5px solid var(--dsw-alias-border-l3);
+  user-select: none;
+}
+
+.statusGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.statusItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.statusAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 5px;
+  font-size: 11px;
+  color: var(--dsw-alias-label-secondary);
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.statusAction:hover {
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-fill-hover);
 }

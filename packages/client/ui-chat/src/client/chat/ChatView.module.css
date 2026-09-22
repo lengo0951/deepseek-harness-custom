@@ -152,6 +152,49 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+}
+
+.sessionBanner[data-has-prompt] {
+  justify-content: flex-end;
+}
+
+.sessionBannerPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(calc(var(--dsh-chat-content-width, 748px) * 0.702), 82%);
+  padding: 4px 12px;
+  border-radius: 16px;
+  background: var(--dsw-alias-button-floating-fill);
+  border: 0.5px solid var(--dsw-alias-border-l1);
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: var(--dsh-content-font-size, 14px);
+  line-height: calc(20px + var(--dsh-content-font-delta, 0px));
+  cursor: pointer;
+  outline: none;
+  min-width: 0;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.sessionBannerPill:hover,
+.sessionBannerPill:focus-visible {
+  background: var(--dsw-alias-button-floating-hover);
+  border-color: var(--dsw-alias-border-l2);
+}
+
+.sessionBannerIcon {
+  flex-shrink: 0;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.sessionBannerText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .hint {

@@ -6,8 +6,9 @@ import type {
   ConversationTimelineSnapshot, RenderMessageImages,
 } from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type { SessionSeq } from '@deepseek-ai/dsh-session/types'
-import { Button, IconChevronDownOutline14, Modal } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Button, IconChevronDownOutline14, IconUserOutline16, Modal } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ChatViewSlotProps, OpenFileOptions } from '../contract/slots.ts'
+import type { ChatNode } from '../contract/chat-nodes.ts'
 import type { ChatSnapshot } from '../contract/snapshot.ts'
 import { PendingSteeringBubble, PendingSubmissionBubble } from './MessageItem.tsx'
 import { ChatNodeSeat } from './ChatNodeSeat.tsx'
@@ -316,6 +317,36 @@ export function ChatView({
   const [activeTurn, setActiveTurn] = useState<number | null>(
     () => turnNavigationItems.at(-1)?.turn ?? null,
   )
+
+  const activeRailItem = useMemo(() => {
+    if (activeTurn === null) return undefined
+    return railItems.find(i => i.turn === activeTurn)
+  }, [railItems, activeTurn])
+
+  const activeTurnItem = useMemo(() => {
+    if (activeTurn === null) return undefined
+    return turnNavigationItems.find(i => i.turn === activeTurn)
+  }, [turnNavigationItems, activeTurn])
+
+  const activePromptText = useMemo(() => {
+    if (activeTurn === null) return undefined
+    const item = turnNavigationItems.find(i => i.turn === activeTurn)
+    if (!item) return undefined
+    const node = nodeStore.get(item.anchorKey) as ChatNode<'user'> | undefined
+    if (node && node.kind === 'user') {
+      const texts: string[] = []
+      for (const block of node.data.content) {
+        if (typeof block === 'object' && block !== null && 'type' in block && block.type === 'text' && 'text' in block && typeof block.text === 'string') {
+          texts.push(block.text)
+        }
+      }
+      const raw = texts.join(' ').replace(/\s+/g, ' ').trim()
+      if (raw !== '') return raw
+    }
+    return item.prompt !== '' ? item.prompt : undefined
+  }, [activeTurn, turnNavigationItems, nodeStore])
+
+  const bannerText = activePromptText ?? sessionTitle
   /** Last position delivered or written on the main thread. */
   const observedTopRef = useRef(0)
   /** Paging anchor: semantic row/position at click, updated by reader scrolls
@@ -761,6 +792,19 @@ export function ChatView({
       : { key: landed.dataset.chatAnchorKey, top: flowTop(landed, el) }
   }, [loadingOlder, loadThrough])
 
+  const scrollToActivePrompt = useCallback(() => {
+    if (activeRailItem !== undefined) {
+      navigateToTurn(activeRailItem)
+    } else if (activeTurnItem !== undefined) {
+      navigateToTurn({
+        turn: activeTurnItem.turn,
+        prompt: activeTurnItem.prompt,
+        response: activeTurnItem.response,
+        anchor: { kind: 'loaded', key: activeTurnItem.anchorKey },
+      })
+    }
+  }, [activeRailItem, activeTurnItem, navigateToTurn])
+
   return (
     <div className={css.root}>
       <div ref={listRef} className={css.scroll}>
@@ -772,8 +816,25 @@ export function ChatView({
           t={t}
         />
         <div ref={columnRef} className={css.column} data-chat-flow="">
-          {sessionTitle !== undefined && sessionTitle !== '' && (
-            <div className={css.sessionBanner} aria-hidden title={sessionTitle}>{sessionTitle}</div>
+          {bannerText !== undefined && bannerText !== '' && (
+            <div
+              className={css.sessionBanner}
+              data-has-prompt={activePromptText !== undefined ? '' : undefined}
+            >
+              {activePromptText !== undefined ? (
+                <button
+                  type="button"
+                  className={css.sessionBannerPill}
+                  title={activePromptText}
+                  onClick={scrollToActivePrompt}
+                >
+                  <IconUserOutline16 className={css.sessionBannerIcon} />
+                  <span className={css.sessionBannerText}>{activePromptText}</span>
+                </button>
+              ) : (
+                <span className={css.sessionBannerText} title={sessionTitle}>{sessionTitle}</span>
+              )}
+            </div>
           )}
           {openState === 'loading' && <div className={css.hint}>{t('chat.loadingHistory')}</div>}
           {openState === 'error' && openError !== null && (

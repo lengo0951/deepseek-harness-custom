@@ -576,6 +576,40 @@ describe('ChatView', () => {
     expect(container.querySelector('[class*="sessionBanner"]')).toBeNull()
   })
 
+  it('pins the active user message collapsed into a single-line prompt pill when turns exist', () => {
+    const snapshot = chatSnapshotFixture({
+      nodes: [
+        userInTurn(1, 'first prompt', 1),
+        assistant(2, 'first response', 1),
+        userInTurn(4, 'a very long prompt\nwith multiple lines\nand extra text', 2),
+        assistant(5, 'second response', 2),
+      ],
+      turnEnds: new Map([[1, 3], [2, 6]]),
+    })
+    const h = makeHarness({}, {}, snapshot)
+    const { container } = render(<h.ChatView {...h.props} />)
+    const banner = container.querySelector('[class*="sessionBanner"]')
+    expect(banner?.getAttribute('data-has-prompt')).toBe('')
+    expect(banner?.textContent).toBe('a very long prompt with multiple lines and extra text')
+    const pill = banner?.querySelector('button[class*="sessionBannerPill"]')
+    expect(pill?.getAttribute('title')).toBe('a very long prompt with multiple lines and extra text')
+  })
+
+  it('scrolls to the active turn when the pinned prompt pill is clicked', () => {
+    const snapshot = chatSnapshotFixture({
+      nodes: [
+        userInTurn(1, 'first prompt', 1),
+        assistant(2, 'first response', 1),
+      ],
+      turnEnds: new Map([[1, 3]]),
+    })
+    const h = makeHarness({}, {}, snapshot)
+    const { container } = render(<h.ChatView {...h.props} />)
+    const pill = container.querySelector<HTMLButtonElement>('button[class*="sessionBannerPill"]')
+    expect(pill).not.toBeNull()
+    fireEvent.click(pill!)
+  })
+
   it('leaves the turn rail unrendered when an unrelated Chat update commits', () => {
     const snapshot = chatSnapshotFixture({
       nodes: [

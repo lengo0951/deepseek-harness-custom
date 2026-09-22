@@ -57,12 +57,11 @@ jobs:
       ${{ vars.DSH_CI_FAILOVER_LINUX == 'blacksmith'
           && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     name: e2e
-    # Run on every trusted event with the API key configured. Skip untrusted PRs (forks + Dependabot)
-    # or personal repos where the secret is absent — they would otherwise hard-fail the preflight.
+    # Run on every trusted event. Skip untrusted PRs (forks + Dependabot) where
+    # the secret is withheld — they would otherwise hard-fail the preflight.
     if: >-
-      (github.event_name != 'pull_request'
-      || !(github.event.pull_request.head.repo.fork || github.event.pull_request.user.login == 'dependabot[bot]'))
-      && secrets.DEEPSEEK_API_KEY_EXTERNAL != ''
+      github.event_name != 'pull_request'
+      || !(github.event.pull_request.head.repo.fork || github.event.pull_request.user.login == 'dependabot[bot]')
     # Profile e2e files can each own several complete dsh subprocess trees, so
     # four file workers preserve process/PTY headroom. Tests retain 120s/test
     # and retry 2; 45m still bounds retry storms against a slow API.
@@ -98,6 +97,10 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${DEEPSEEK_API_KEY:-}" ]; then
+            if [ "${GITHUB_REPOSITORY}" != "deepseek-ai/deepseek-harness" ]; then
+              echo "DEEPSEEK_API_KEY is empty in fork ${GITHUB_REPOSITORY}. Skipping e2e suite."
+              exit 0
+            fi
             echo "::error::DEEPSEEK_API_KEY is empty. The e2e suite would self-skip and"
             echo "::error::report a false green. Configure the repo secret DEEPSEEK_API_KEY_EXTERNAL."
             exit 1
@@ -121,4 +124,10 @@ jobs:
           DEEPSEEK_BASE_URL: https://api.deepseek.com/anthropic
           DSH_E2E_MAX_WORKERS: 4
           DSH_EXAMPLE_MODE: lib
-        run: pnpm run test:e2e
+        run: |
+          set -euo pipefail
+          if [ -z "${DEEPSEEK_API_KEY:-}" ]; then
+            echo "Skipping e2e tests because DEEPSEEK_API_KEY is not set."
+            exit 0
+          fi
+          pnpm run test:e2e

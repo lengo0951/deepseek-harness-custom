@@ -374,7 +374,6 @@ jobs:
         if: >-
           inputs.ci
           && runner.os != 'Windows'
-          && secrets.DEEPSEEK_API_KEY_EXTERNAL != ''
           && (github.event_name != 'pull_request'
               || !(github.event.pull_request.head.repo.fork
                    || github.event.pull_request.user.login == 'dependabot[bot]'))
@@ -383,6 +382,10 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${DEEPSEEK_API_KEY:-}" ]; then
+            if [ "${GITHUB_REPOSITORY}" != "deepseek-ai/deepseek-harness" ]; then
+              echo "DEEPSEEK_API_KEY_EXTERNAL is empty in fork ${GITHUB_REPOSITORY}. Skipping live API test."
+              exit 0
+            fi
             echo "::error::DEEPSEEK_API_KEY_EXTERNAL is empty; the installed-wheel real API test cannot self-skip."
             exit 1
           fi
@@ -391,7 +394,6 @@ jobs:
         if: >-
           inputs.ci
           && runner.os == 'Windows'
-          && secrets.DEEPSEEK_API_KEY_EXTERNAL != ''
           && (github.event_name != 'pull_request'
               || !(github.event.pull_request.head.repo.fork
                    || github.event.pull_request.user.login == 'dependabot[bot]'))
@@ -400,6 +402,10 @@ jobs:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY_EXTERNAL }}
         run: |
           if ([string]::IsNullOrWhiteSpace($env:DEEPSEEK_API_KEY)) {
+            if ($env:GITHUB_REPOSITORY -ne 'deepseek-ai/deepseek-harness') {
+              Write-Host "DEEPSEEK_API_KEY_EXTERNAL is empty in fork $env:GITHUB_REPOSITORY. Skipping live API test."
+              exit 0
+            }
             throw 'DEEPSEEK_API_KEY_EXTERNAL is empty; the installed-wheel real API test cannot self-skip.'
           }
 
@@ -407,7 +413,6 @@ jobs:
         if: >-
           inputs.ci
           && runner.os != 'Windows'
-          && secrets.DEEPSEEK_API_KEY_EXTERNAL != ''
           && (github.event_name != 'pull_request'
               || !(github.event.pull_request.head.repo.fork
                    || github.event.pull_request.user.login == 'dependabot[bot]'))
@@ -416,6 +421,10 @@ jobs:
           DEEPSEEK_BASE_URL: https://api.deepseek.com/anthropic
         run: |
           set -euo pipefail
+          if [ -z "${DEEPSEEK_API_KEY:-}" ]; then
+            echo "Skipping live API test because DEEPSEEK_API_KEY is not set."
+            exit 0
+          fi
           blackbox_root="$(python -c 'import tempfile; print(tempfile.mkdtemp(prefix="dsh-sdk-blackbox-live-"))')"
           cd "$blackbox_root"
           env -u PYTHONPATH -u DSH_RUNTIME_MODE \
@@ -428,7 +437,6 @@ jobs:
         if: >-
           inputs.ci
           && runner.os == 'Windows'
-          && secrets.DEEPSEEK_API_KEY_EXTERNAL != ''
           && (github.event_name != 'pull_request'
               || !(github.event.pull_request.head.repo.fork
                    || github.event.pull_request.user.login == 'dependabot[bot]'))
@@ -437,6 +445,10 @@ jobs:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY_EXTERNAL }}
           DEEPSEEK_BASE_URL: https://api.deepseek.com/anthropic
         run: |
+          if ([string]::IsNullOrWhiteSpace($env:DEEPSEEK_API_KEY)) {
+            Write-Host "Skipping live API test because DEEPSEEK_API_KEY is not set."
+            exit 0
+          }
           $blackboxRoot = (& python -c 'import tempfile; print(tempfile.mkdtemp(prefix="dsh-sdk-blackbox-live-"))').Trim()
           Remove-Item Env:PYTHONPATH -ErrorAction SilentlyContinue
           Remove-Item Env:DSH_RUNTIME_MODE -ErrorAction SilentlyContinue
